@@ -1,7 +1,8 @@
 import threading
 import time
 
-import requests
+import cloudscraper
+
 
 
 class Requester:
@@ -15,6 +16,8 @@ class Requester:
             rqm (int, optional): Maximum requests per time window (-1 -> no limit). Defaults to -1.
             timew (int, optional): Time window (seconds). Defaults to 60.
         """
+        self.scraper = cloudscraper.create_scraper()
+
         
         self._requests = []
         self._rqtw = rqtw
@@ -65,7 +68,7 @@ class Requester:
             del kwargs["session"]
             req = sess.request(*args, **kwargs)
         else:
-            req = requests.request(*args, **kwargs)
+            req = self.scraper.request(*args, **kwargs)
             
         return req
 
