@@ -4,9 +4,9 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ao3-api"
-version = "2.3.1"
+version = "0.1.0"
 authors = [
-  { name="Wendy" },
+  { name="Amy" },
 ]
 description = "An unofficial AO3 (archiveofourown.org) API"
 readme = "README.md"
@@ -21,10 +21,9 @@ keywords = ["ao3", "fanfiction", "Archive of Our Own"]
 dependencies = [
     "BeautifulSoup4",
     "lxml",
-    "requests"
+    "cloudscraper"
 ]
 
 [project.urls]
-Homepage = "https://github.com/wendytg/ao3_api"
-Issues = "https://github.com/wendytg/ao3_api/issues"
-Documentation = "https://ao3-api.readthedocs.io/"
+Homepage = "https://github.com/amytjea/ao3_api"
+Issues = "https://github.com/amytjea/ao3_api/issues"

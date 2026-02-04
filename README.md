@@ -1,16 +1,11 @@
 [![Documentation Status](https://readthedocs.org/projects/ao3-api/badge/?version=latest)](https://ao3-api.readthedocs.io/en/latest/?badge=latest)
 
 # AO3 API
+This is an extension on [wendytg's AO3 API](https://github.com/wendytg/ao3_api), which allows access of some of AO3's data through an REST API (FastAPI)
 
-This is an unofficial API that lets you access some of AO3's (archiveofourown.org) data through Python.
+## Running locally
 
-## Installation
-
-Use the package manager [pip](https://pip.pypa.io/en/stable/) to install AO3 API.
-
-```bash
-pip install ao3_api
-```
+docker container? run local server and send queries
 
 # Github
 
@@ -279,6 +274,12 @@ To download a resource, simply use `AO3.extra.download(resource_name)`. To downl
 # Contact info
 
 For information or bug reports, please create an issue or start a discussion.
+
+
+# Acknowledgements
+
+This project is based on the original [ao3_api](https://github.com/wendytg/ao3_api) project by
+[wendytg](https://github.com/wendytg), licensed under the MIT License.
 
 
 # License
