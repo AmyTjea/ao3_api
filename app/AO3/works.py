@@ -264,6 +264,7 @@ class Work:
 
         return metadata
 
+    # TODO: ADJUST so comments can also be recieved in a stream/ can use pagniation
     def get_comments(self, maximum=None):
         """Returns a list of all threads of comments in the work. This operation can take a very long time.
         Because of that, it is recomended that you set a maximum number of comments.
@@ -678,6 +679,20 @@ class Work:
             return int(self.str_format(kudos.string))
         return 0
 
+    # @cached_property
+    # def kudos(self):
+    #     """Returns kudosers of this work 
+    #
+   #  access kudosers via https://archiveofourown.org/works/{workid}/kudos
+    #     Returns:
+    #         int: number of kudos
+    #     """
+
+    #     kudos = self._soup.find("dd", {"class": "kudos"})
+    #     if kudos is not None:
+    #         return int(self.str_format(kudos.string))
+    #     return 0
+
     @cached_property
     def comments(self):
         """Returns the number of comments this work has
@@ -739,6 +754,59 @@ class Work:
         if bookmarks is not None:
             return int(self.str_format(bookmarks.string))
         return 0
+    
+    def get_bookmarkers(self):
+        """Returns the bookmarkers of this work 
+        #TODO: Update so that bookmarks are own property with info like bookmark tags and etc
+
+        Returns:
+            int: number of bookmarks
+        """
+        from .users import User
+
+        if self.bookmarks == 0:
+            return []
+        print(self.bookmarks)
+        soup_bookmarkers = self.request(f"https://archiveofourown.org/works/{self.id}/bookmarks")
+
+        ## find how many pages of bookmarkers
+        pages = soup_bookmarkers.find("ol", {"class": "pagination"})
+        n = 1
+        # TODO: Adjust so instead of getting numbers via iteration, select the last li without the class next
+        if pages is not None:
+            for li in pages.findAll("li"):
+                text = li.getText()
+                if text.isdigit():
+                    n = int(text)
+
+        # alternative, n= pages[-2]
+
+        bookmarkers_usernames = []
+        for page in range(n):
+            bookmarkers_usernames += self._get_bookmarkers(page+1)
+
+        bookmarkers = []
+        if bookmarkers_usernames is not None:
+            for username in bookmarkers_usernames:
+                user = User(username, load=False)
+                bookmarkers.append(user)
+
+        return bookmarkers
+    
+    def _get_bookmarkers(self,page=1):
+        bookmarker_usernames = []
+
+        soup_bookmarks_page = self.request(f"https://archiveofourown.org/works/{self.id}/bookmarks?page={page}")
+        
+        ol = soup_bookmarks_page.find("ol", {"class": "bookmark index group"})
+
+        for user_bookmark in ol.select("li.user.short.blurb.group"):
+            h5 = user_bookmark.find("h5")
+            #grab the username 
+            bookmarker_usernames.append(h5.find("a").getText())
+
+        return bookmarker_usernames
+
 
     @cached_property
     def title(self):

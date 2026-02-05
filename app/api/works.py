@@ -1,8 +1,8 @@
 from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import StreamingResponse
 
-from AO3.works import Work
-from AO3 import utils
+from app.AO3.works import Work
+from app.AO3 import utils
 
 router = APIRouter()
 
@@ -95,5 +95,22 @@ def download_work(
             "Content-Disposition": f'attachment; filename="{filename}"'
         },
     )
+
+
+@router.get("/{work_id}/bookmarks") #get users who bookmark
+def get_work_bookmarks(
+    work_id: int,
+):
+    work = load_work(work_id, load_chapters=False)
+
+    bookmarks = work.get_bookmarkers()
+
+    return [
+        {
+            "username": c.username 
+        }
+        for c in bookmarks
+    ]
+#@router.get("/{work_id}/kudos") #return user ids + number kudos
 
 
