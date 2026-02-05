@@ -318,7 +318,7 @@ class User:
         threads = []
         self._bookmarks = []
         for page in range(self._bookmarks_pages):
-            threads.append(self._load_bookmarks(page=page+1, threaded=True))
+            threads.append(self._load_bookmarks(page=page+1))
         for thread in threads:
             thread.join()
 
