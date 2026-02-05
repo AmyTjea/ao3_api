@@ -53,3 +53,6 @@ Search
 
 
 Series
+
+# other work
+Look into developing a schema for consistency
