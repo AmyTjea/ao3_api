@@ -1,5 +1,10 @@
 # API Work
 
+## setting up environment
+set up docker container for running fastapi server
+- one for dev
+-one for staging
+- one for prod
 
 ## Modules to modify/ extend
 Works

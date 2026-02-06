@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  fastapi-app:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    ports:
+      - "8000:80"
+    volumes:
+      - ./app:/code/app
+    environment:
+      - ENVIRONMENT=development
+      - PYTHONUNBUFFERED=1
+    restart: unless-stopped 

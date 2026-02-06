@@ -7,6 +7,21 @@ This is an extension on [wendytg's AO3 API](https://github.com/wendytg/ao3_api),
 
 docker container? run local server and send queries
 
+running dev env
+
+```
+# Start dev environment
+docker compose -f docker-compose.dev.yml up
+
+# Rebuild and start (after changing requirements.txt)
+docker compose -f docker-compose.dev.yml up --build
+
+# Stop dev environment
+docker compose -f docker-compose.dev.yml down
+
+```
+
+access locally on http://localhost:8000/docs and http://localhost:8000
 # Github
 
 https://github.com/wendytg/ao3_api
