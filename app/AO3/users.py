@@ -126,17 +126,15 @@ class User:
         self._bookmarks = None
         
     def get_avatar(self):
-        """Returns a tuple containing the name of the file and its data
+        """Returns a tuple containing the source url of the avatar
 
         Returns:
-            tuple: (name: str, img: bytes)
+            src: str
         """
         
         icon = self._soup_profile.find("p", {"class": "icon"})
         src = icon.img.attrs["src"]
-        name = src.split("/")[-1].split("?")[0]
-        img = self.get(src).content
-        return name, img
+        return src
     
     @threadable.threadable
     def subscribe(self):
@@ -170,8 +168,29 @@ class User:
         
     @property
     def id(self):
-        id_ = self._soup_profile.find("input", {"id": "subscription_subscribable_id"})
-        return int(id_["value"]) if id_ is not None else None
+        meta = self._soup_profile.find("dl", class_="meta")
+        user_id_dt = meta.find("dt", string="My user ID is:")
+        user_id = user_id_dt.find_next_sibling("dd").get_text(strip=True)
+
+        return user_id
+    
+    @property
+    def join_date(self):
+        meta = self ._soup_profile.find("dl", class_="meta")
+        joined_dt = meta.find("dt", string="I joined on:")
+        joined_date = joined_dt.find_next_sibling("dd").get_text(strip=True)
+        return joined_date
+    
+    @property
+    def pseuds(self):
+        # has name for the pseudos only
+        pseuds = []
+        meta = self._soup_profile.find("dl", class_="meta")
+        pseud = meta.find("dd", class_="pseuds")
+        for name in pseud.find_all("a"):
+            pseuds+= name
+
+        return pseuds
         
     @cached_property
     def is_subscribed(self):
@@ -199,7 +218,6 @@ class User:
     #     token = self._soup_profile.find("meta", {"name": "csrf-token"})
     #     return token["content"]
     
-    #TODO: THIS IS FALSE CAN ACCESS ON HOME PAGE
     @cached_property
     def user_id(self):
         if self._session is None or not self._session.is_authed:
