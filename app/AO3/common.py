@@ -1,6 +1,4 @@
 from . import utils
-from .works import Work
-
 
 def __setifnotnone(obj, attr, value):
     if value is not None:
@@ -8,6 +6,7 @@ def __setifnotnone(obj, attr, value):
 
 def get_work_or_series_from_banner(banner):
     from .series import Series
+
 
     a = banner.h4.find_all("a")[0]
 
@@ -19,13 +18,17 @@ def get_work_or_series_from_banner(banner):
 
 
 def get_work_from_banner(work):    
+    #* These imports need to be here to prevent circular imports
+    #* (series.py would require common.py and vice-versa)
+    from .works import Work
+
     try:
-        for a in work.h4.find_all("a"):
-            workid = utils.workid_from_url(a['href'])
+        a = work.h4.find_all("a")[0] # first link wll be the work link
+        workid = utils.workid_from_url(a['href'])
     except AttributeError:
         raise AttributeError
-             
-    new = Work(workid, load=True)
+
+    new = Work(workid, load=True,load_chapters=False)
     return new
 
 def url_join(base, *args):
