@@ -766,7 +766,6 @@ class Work:
 
         if self.bookmarks == 0:
             return []
-        print(self.bookmarks)
         soup_bookmarkers = self.request(f"https://archiveofourown.org/works/{self.id}/bookmarks")
 
         ## find how many pages of bookmarkers
