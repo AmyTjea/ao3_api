@@ -1,11 +1,9 @@
-import datetime
 from functools import cached_property
 
-import requests
 from bs4 import BeautifulSoup
 
 from . import threadable, utils
-from .common import get_work_from_banner
+from .common import get_work_from_banner, get_work_or_series_from_banner
 from .requester import requester
 
 
@@ -178,6 +176,7 @@ class User:
     #     token = self._soup_profile.find("meta", {"name": "csrf-token"})
     #     return token["content"]
     
+    #TODO: THIS IS FALSE CAN ACCESS ON HOME PAGE
     @cached_property
     def user_id(self):
         if self._session is None or not self._session.is_authed:
@@ -331,9 +330,9 @@ class User:
 
         for work in ol.find_all("li", {"role": "article"}):
             authors = []
-            if work.h4 is None:
+            if work.h4 is None or work.h4.a is None:
                 continue
-            self._bookmarks.append(get_work_from_banner(work))
+            self._bookmarks.append(get_work_or_series_from_banner(work))
     
     @cached_property
     def bio(self):
