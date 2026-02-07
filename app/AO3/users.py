@@ -126,14 +126,17 @@ class User:
         self._bookmarks = None
         
     def get_avatar(self):
-        """Returns a tuple containing the source url of the avatar
+        """Returns the source url of the avatar
 
         Returns:
             src: str
         """
         
         icon = self._soup_profile.find("p", {"class": "icon"})
+        print(icon  )
         src = icon.img.attrs["src"]
+        if src == "images/skins/iconsets/default/icon_user.png":
+            return "https://archiveofourown.org/images/skins/iconsets/default/icon_user.png"
         return src
     
     @threadable.threadable
