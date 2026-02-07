@@ -69,35 +69,58 @@ class User:
         Loads information about this user.
         This function is threadable.
         """
-        
+
+        # clear cached properties
         for attr in self.__class__.__dict__:
             if isinstance(getattr(self.__class__, attr), cached_property):
-                if attr in self.__dict__:
-                    delattr(self, attr)
-        
-        @threadable.threadable
-        def req_works(username):
-            self._soup_works = self.request(f"https://archiveofourown.org/users/{username}/works")
-            token = self._soup_works.find("meta", {"name": "csrf-token"})
-            setattr(self, "authenticity_token", token["content"])
-           
-        @threadable.threadable
-        def req_profile(username): 
-            self._soup_profile = self.request(f"https://archiveofourown.org/users/{username}/profile")
-            token = self._soup_profile.find("meta", {"name": "csrf-token"})
-            setattr(self, "authenticity_token", token["content"])
+                self.__dict__.pop(attr, None)
+
+        self._works_token = None
+        self._profile_token = None
+        self._bookmarks_token = None
 
         @threadable.threadable
-        def req_bookmarks(username): 
-            self._soup_bookmarks = self.request(f"https://archiveofourown.org/users/{username}/bookmarks")
+        def req_works(username):
+            self._soup_works = self.request(
+                f"https://archiveofourown.org/users/{username}/works"
+            )
+            token = self._soup_works.find("meta", {"name": "csrf-token"})
+            self._works_token = token["content"] if token else None
+
+        @threadable.threadable
+        def req_profile(username):
+            self._soup_profile = self.request(
+                f"https://archiveofourown.org/users/{username}/profile"
+            )
+            token = self._soup_profile.find("meta", {"name": "csrf-token"})
+            self._profile_token = token["content"] if token else None
+
+        @threadable.threadable
+        def req_bookmarks(username):
+            self._soup_bookmarks = self.request(
+                f"https://archiveofourown.org/users/{username}/bookmarks"
+            )
             token = self._soup_bookmarks.find("meta", {"name": "csrf-token"})
-            setattr(self, "authenticity_token", token["content"])
-            
-        rs = [req_works(self.username, threaded=True),
-              req_profile(self.username, threaded=True),
-              req_bookmarks(self.username, threaded=True)]
-        for r in rs:
-            r.join()
+            self._bookmarks_token = token["content"] if token else None
+
+        threads = [
+            req_works(self.username, threaded=True),
+            req_profile(self.username, threaded=True),
+            req_bookmarks(self.username, threaded=True),
+        ]
+
+        for t in threads:
+            t.join()
+
+        # pick the first valid token
+        self.authenticity_token = next(
+            (t for t in (
+                self._profile_token,
+                self._works_token,
+                self._bookmarks_token,
+            ) if t),
+            None
+        )
 
         self._works = None
         self._bookmarks = None
