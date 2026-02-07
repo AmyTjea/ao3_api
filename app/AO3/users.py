@@ -133,7 +133,6 @@ class User:
         """
         
         icon = self._soup_profile.find("p", {"class": "icon"})
-        print(icon  )
         src = icon.img.attrs["src"]
         if src == "images/skins/iconsets/default/icon_user.png":
             return "https://archiveofourown.org/images/skins/iconsets/default/icon_user.png"
