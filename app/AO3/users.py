@@ -319,7 +319,7 @@ class User:
 
         div = self._soup_bookmarks.find("div", {"class": "bookmarks-index dashboard filtered region"})
         h2 = div.h2.text.split()
-        return int(h2[4].replace(',', ''))  
+        return int(h2[0])  
 
     @cached_property
     def _bookmarks_pages(self):

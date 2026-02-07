@@ -37,9 +37,7 @@ def get_user_metadata(username: str):
 def get_user_works(username: str):
     user = load_user(username)
     works = user.get_works()
-    print(works)
     works_details = [work.metadata for work in works]
-    print(works_details)
     return {"username": user.username, 
             "nworks": user.works, 
             "works": works_details}
@@ -48,4 +46,4 @@ def get_user_works(username: str):
 @router.get("/{username}/bookmarks")
 def get_user_bookmarks(username: str):
     user = load_user(username)
-    return user.get_bookmarks()  # todo: convert into json
+    return [bm.metadata for bm in user.get_bookmarks()]  

@@ -207,6 +207,7 @@ class Work:
         normal_fields = (
             "id",
             "title",
+            "url",
             "fandoms",
             "rating",
             "bookmarks",
@@ -233,6 +234,8 @@ class Work:
             "date_published",
             "date_updated",
         )
+
+
         for field in normal_fields:
             try:
                 metadata[field] = getattr(self, field)
@@ -261,6 +264,8 @@ class Work:
             )
         except AttributeError:
             pass
+
+        
 
         return metadata
 
@@ -563,7 +568,12 @@ class Work:
     @property
     def loaded(self):
         """Returns True if this work has been loaded"""
-        return self._soup is not None
+        return self._soup is not None    
+    
+    @property
+    def url(self):
+        """Returns True if this work has been loaded"""
+        return f"https://archiveofourown.org/works/{self.id}"
 
     @property
     def oneshot(self):
