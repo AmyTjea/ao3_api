@@ -8,6 +8,26 @@ set up docker container for running fastapi server
   -one for staging
 * one for prod
 
+
+
+
+
+sundat todo:
+
+Refactor request + get methods
+
+
+
+allow getting users who kudos works
+
+
+
+add stricter typing for the json/ use pydantic 
+
+
+
+
+
 ## Modules to modify/ extend
 
 OTHER LAST DO THIS
@@ -35,16 +55,33 @@ Users DO THIS FIRST, THEN EXPOSE TO API
 
 * \[v] update bookmarks? (can now handle series and works)
 * \[v] update how bookmarks + series gotten from banner (need to figure out handling error Pages (getting issues as getting the 503 ao3 is responding slowly
+* update
 * \[] remove session and other related functions
 * \[v] add ability to handle profile data + bio + other stuff
 
+
+
+
+
 Chapters
 
-Comments
+get notes for a chapter
+
+
+
+Comments (get comments from a work)
+
+get notes for a work
+
+
 
 collections
 
+
+
 Extra
+
+
 
 Search
 
