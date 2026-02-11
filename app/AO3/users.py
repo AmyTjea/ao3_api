@@ -81,7 +81,7 @@ class User:
 
         @threadable.threadable
         def req_works(username):
-            self._soup_works = self.request(
+            self._soup_works = utils.request(
                 f"https://archiveofourown.org/users/{username}/works"
             )
             token = self._soup_works.find("meta", {"name": "csrf-token"})
@@ -89,7 +89,7 @@ class User:
 
         @threadable.threadable
         def req_profile(username):
-            self._soup_profile = self.request(
+            self._soup_profile = utils.request(
                 f"https://archiveofourown.org/users/{username}/profile"
             )
             token = self._soup_profile.find("meta", {"name": "csrf-token"})
@@ -97,7 +97,7 @@ class User:
 
         @threadable.threadable
         def req_bookmarks(username):
-            self._soup_bookmarks = self.request(
+            self._soup_bookmarks = utils.request(
                 f"https://archiveofourown.org/users/{username}/bookmarks"
             )
             token = self._soup_bookmarks.find("meta", {"name": "csrf-token"})
@@ -300,7 +300,7 @@ class User:
     @threadable.threadable
     def _load_works(self, page=1):
         from .works import Work
-        self._soup_works = self.request(f"https://archiveofourown.org/users/{self.username}/works?page={page}")
+        self._soup_works = utils.request(f"https://archiveofourown.org/users/{self.username}/works?page={page}")
             
         ol = self._soup_works.find("ol", {"class": "work index group"})
 
@@ -367,7 +367,7 @@ class User:
     @threadable.threadable
     def _load_bookmarks(self, page=1):
         from .works import Work
-        self._soup_bookmarks = self.request(f"https://archiveofourown.org/users/{self.username}/bookmarks?page={page}")
+        self._soup_bookmarks = utils.request(f"https://archiveofourown.org/users/{self.username}/bookmarks?page={page}")
             
         ol = self._soup_bookmarks.find("ol", {"class": "bookmark index group"})
 
@@ -401,30 +401,7 @@ class User:
 
         return "https://archiveofourown.org/users/%s"%self.username      
 
-    def get(self, *args, **kwargs):
-        """Request a web page and return a Response object"""  
-        
-        if self._session is None:
-            req = requester.request("get", *args, **kwargs)
-        else:
-            req = requester.request("get", *args, **kwargs, session=self._session.session)
-        if req.status_code == 429:
-            raise utils.HTTPError("We are being rate-limited. Try again in a while or reduce the number of requests")
-        return req
 
-    def request(self, url):
-        """Request a web page and return a BeautifulSoup object.
-
-        Args:
-            url (str): Url to request
-
-        Returns:
-            bs4.BeautifulSoup: BeautifulSoup object representing the requested page's html
-        """
-
-        req = self.get(url)
-        soup = BeautifulSoup(req.content, "lxml")
-        return soup
 
     @staticmethod
     def str_format(string):

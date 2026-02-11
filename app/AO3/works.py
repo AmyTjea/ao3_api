@@ -77,7 +77,7 @@ class Work:
                 if attr in self.__dict__:
                     delattr(self, attr)
 
-        self._soup = self.request(
+        self._soup = utils.request(
             f"https://archiveofourown.org/works/{self.id}?view_adult=true&view_full_work=true"
         )
         if "Error 404" in self._soup.find("h2", {"class", "heading"}).text:
@@ -170,7 +170,7 @@ class Work:
         for download_type in download_btn.findAll("li"):
             if download_type.a.getText() == filetype.upper():
                 url = f"https://archiveofourown.org/{download_type.a.attrs['href']}"
-                req = self.get(url)
+                req = utils.get(url)
                 if req.status_code == 429:
                     raise utils.HTTPError(
                         "We are being rate-limited. Try again in a while or reduce the number of requests"
@@ -293,7 +293,7 @@ class Work:
             )
 
         url = f"https://archiveofourown.org/works/{self.id}?page=%d&show_comments=true&view_adult=true&view_full_work=true"
-        soup = self.request(url % 1)
+        soup = utils.request(url % 1)
 
         pages = 0
         div = soup.find("div", {"id": "comments_placeholder"})
@@ -308,7 +308,7 @@ class Work:
         comments = []
         for page in range(pages):
             if page != 0:
-                soup = self.request(url % (page + 1))
+                soup = utils.request(url % (page + 1))
             ol = soup.find("ol", {"class": "thread"})
             for li in ol.findAll("li", {"role": "article"}, recursive=False):
                 if maximum is not None and len(comments) >= maximum:
@@ -776,7 +776,7 @@ class Work:
 
         if self.bookmarks == 0:
             return []
-        soup_bookmarkers = self.request(f"https://archiveofourown.org/works/{self.id}/bookmarks")
+        soup_bookmarkers = utils.request(f"https://archiveofourown.org/works/{self.id}/bookmarks")
 
         ## find how many pages of bookmarkers
         pages = soup_bookmarkers.find("ol", {"class": "pagination"})
@@ -805,7 +805,7 @@ class Work:
     def _get_bookmarkers(self,page=1):
         bookmarker_usernames = []
 
-        soup_bookmarks_page = self.request(f"https://archiveofourown.org/works/{self.id}/bookmarks?page={page}")
+        soup_bookmarks_page = utils.request(f"https://archiveofourown.org/works/{self.id}/bookmarks?page={page}")
         
         ol = soup_bookmarks_page.find("ol", {"class": "bookmark index group"})
 
@@ -816,6 +816,56 @@ class Work:
 
         return bookmarker_usernames
 
+    def get_kudosers(self):
+        """Returns the bookmarkers of this work 
+        #TODO: Update so that bookmarks are own property with info like bookmark tags and etc
+
+        Returns:
+            int: number of bookmarks
+        """
+        from .users import User
+
+        if self.bookmarks == 0:
+            return []
+        soup_bookmarkers = utils.request(f"https://archiveofourown.org/works/{self.id}/bookmarks")
+
+        ## find how many pages of bookmarkers
+        pages = soup_bookmarkers.find("ol", {"class": "pagination"})
+        n = 1
+        # TODO: Adjust so instead of getting numbers via iteration, select the last li without the class next
+        if pages is not None:
+            for li in pages.findAll("li"):
+                text = li.getText()
+                if text.isdigit():
+                    n = int(text)
+
+        # alternative, n= pages[-2]
+
+        bookmarkers_usernames = []
+        for page in range(n):
+            bookmarkers_usernames += self._get_bookmarkers(page+1)
+
+        bookmarkers = []
+        if bookmarkers_usernames is not None:
+            for username in bookmarkers_usernames:
+                user = User(username, load=False)
+                bookmarkers.append(user)
+
+        return bookmarkers
+    
+    def _get_kudosers(self,page=1):
+        bookmarker_usernames = []
+
+        soup_bookmarks_page = utils.request(f"https://archiveofourown.org/works/{self.id}/bookmarks?page={page}")
+        
+        ol = soup_bookmarks_page.find("ol", {"class": "bookmark index group"})
+
+        for user_bookmark in ol.select("li.user.short.blurb.group"):
+            h5 = user_bookmark.find("h5")
+            #grab the username 
+            bookmarker_usernames.append(h5.find("a").getText())
+
+        return bookmarker_usernames
 
     @cached_property
     def title(self):
@@ -1046,39 +1096,6 @@ class Work:
             for collection in html.find_all("a"):
                 collections.append(collection.get_text())
         return collections
-
-    def get(self, *args, **kwargs):
-        """Request a web page and return a Response object"""
-
-        if self._session is None:
-            req = requester.request("get", *args, **kwargs)
-        else:
-            req = requester.request(
-                "get", *args, **kwargs, session=self._session.session
-            )
-        if req.status_code == 429:
-            raise utils.HTTPError(
-                "We are being rate-limited. Try again in a while or reduce the number of requests"
-            )
-        return req
-
-    def request(self, url):
-        """Request a web page and return a BeautifulSoup object.
-
-        Args:
-            url (str): Url to request
-
-        Returns:
-            bs4.BeautifulSoup: BeautifulSoup object representing the requested page's html
-        """
-
-        req = self.get(url)
-        if len(req.content) > 650000:
-            warnings.warn(
-                "This work is very big and might take a very long time to load"
-            )
-        soup = BeautifulSoup(req.content, "lxml")
-        return soup
 
     @staticmethod
     def str_format(string):

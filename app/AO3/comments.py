@@ -208,7 +208,7 @@ class Comment:
                 if attr in self.__dict__:
                     delattr(self, attr)
         
-        req = self.get(f"https://archiveofourown.org/comments/{self.id}")
+        req = utils.request(f"https://archiveofourown.org/comments/{self.id}")
         self.__soup = BeautifulSoup(req.content, features="lxml")
         
         token = self.__soup.find("meta", {"name": "csrf-token"})
@@ -242,16 +242,6 @@ class Comment:
         
         utils.delete_comment(self, self._session)
         
-    def get(self, *args, **kwargs):
-        """Request a web page and return a Response object"""  
-        
-        if self._session is None:
-            req = requester.request("get", *args, **kwargs)
-        else:
-            req = requester.request("get", *args, **kwargs, session=self._session.session)
-        if req.status_code == 429:
-            raise utils.HTTPError("We are being rate-limited. Try again in a while or reduce the number of requests")
-        return req
     
 def threadIterator(comment):
     if comment.get_thread() is None or len(comment.get_thread()) == 0:

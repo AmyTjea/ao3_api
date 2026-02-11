@@ -76,7 +76,7 @@ class Series:
                 if attr in self.__dict__:
                     delattr(self, attr)
 
-        self._soup = self.request(f"https://archiveofourown.org/series/{self.id}")
+        self._soup = utils.request(f"https://archiveofourown.org/series/{self.id}")
         if "Error 404" in self._soup.text:
             raise utils.InvalidIdError("Cannot find series")
 
@@ -416,32 +416,3 @@ class Series:
         #     setattr(new, "authors", authors)
         #     works.append(new)
         return works
-
-    def get(self, *args, **kwargs):
-        """Request a web page and return a Response object"""
-
-        if self._session is None:
-            req = requester.request("get", *args, **kwargs)
-        else:
-            req = requester.request(
-                "get", *args, **kwargs, session=self._session.session
-            )
-        if req.status_code == 429:
-            raise utils.HTTPError(
-                "We are being rate-limited. Try again in a while or reduce the number of requests"
-            )
-        return req
-
-    def request(self, url):
-        """Request a web page and return a BeautifulSoup object.
-
-        Args:
-            url (str): Url to request
-
-        Returns:
-            bs4.BeautifulSoup: BeautifulSoup object representing the requested page's html
-        """
-
-        req = self.get(url)
-        soup = BeautifulSoup(req.content, "lxml")
-        return soup

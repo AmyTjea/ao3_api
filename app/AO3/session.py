@@ -98,31 +98,7 @@ class GuestSession:
         if token is None:
             raise utils.UnexpectedResponseError("Couldn't refresh token")
         self.authenticity_token = token.attrs["value"]
-        
-    def get(self, *args, **kwargs):
-        """Request a web page and return a Response object"""  
-        
-        if self.session is None:
-            req = requester.request("get", *args, **kwargs)
-        else:
-            req = requester.request("get", *args, **kwargs, session=self.session)
-        if req.status_code == 429:
-            raise utils.HTTPError("We are being rate-limited. Try again in a while or reduce the number of requests")
-        return req
 
-    def request(self, url):
-        """Request a web page and return a BeautifulSoup object.
-
-        Args:
-            url (str): Url to request
-
-        Returns:
-            bs4.BeautifulSoup: BeautifulSoup object representing the requested page's html
-        """
-
-        req = self.get(url)
-        soup = BeautifulSoup(req.content, "lxml")
-        return soup
 
     def post(self, *args, **kwargs):
         """Make a post request with the current session
@@ -162,7 +138,7 @@ class Session(GuestSession):
         
         self.session = requests.Session()
         
-        soup = self.request("https://archiveofourown.org/users/login")
+        soup = utils.request("https://archiveofourown.org/users/login")
         self.authenticity_token = soup.find("input", {"name": 'authenticity_token'})["value"]
         payload = {'user[login]': username,
                    'user[password]': password,
@@ -207,7 +183,7 @@ class Session(GuestSession):
     @cached_property
     def _subscription_pages(self):
         url = self._subscriptions_url.format(self.username, 1)
-        soup = self.request(url)
+        soup = utils.request(url)
         pages = soup.find("ol", {"title": "pagination"})
         if pages is None:
             return 1
@@ -285,7 +261,7 @@ class Session(GuestSession):
     @threadable.threadable
     def _load_subscriptions(self, page=1):        
         url = self._subscriptions_url.format(self.username, page)
-        soup = self.request(url)
+        soup = utils.request(url)
         subscriptions = soup.find("dl", {"class": "subscription index group"})
         for sub in subscriptions.find_all("dt"):
             type_ = "work"
@@ -324,7 +300,7 @@ class Session(GuestSession):
     @cached_property
     def _history_pages(self):
         url = self._history_url.format(self.username, 1)
-        soup = self.request(url)
+        soup = utils.request(url)
         pages = soup.find("ol", {"title": "pagination"})
         if pages is None:
             return 1
@@ -384,7 +360,7 @@ class Session(GuestSession):
 
     def _load_history(self, page=1):       
         url = self._history_url.format(self.username, page)
-        soup = self.request(url)
+        soup = utils.request(url)
         history = soup.find("ol", {"class": "reading work index group"})
         for item in history.find_all("li", {"role": "article"}):
             # authors = []
@@ -422,7 +398,7 @@ class Session(GuestSession):
     @cached_property
     def _bookmark_pages(self):
         url = self._bookmarks_url.format(self.username, 1)
-        soup = self.request(url)
+        soup = utils.request(url)
         pages = soup.find("ol", {"title": "pagination"})
         if pages is None:
             return 1
@@ -467,7 +443,7 @@ class Session(GuestSession):
     @threadable.threadable
     def _load_bookmarks(self, page=1):       
         url = self._bookmarks_url.format(self.username, page)
-        soup = self.request(url)
+        soup = utils.request(url)
         bookmarks = soup.find("ol", {"class": "bookmark index group"})
         for bookm in bookmarks.find_all("li", {"class": ["bookmark", "index", "group"]}):
             authors = []
@@ -507,7 +483,7 @@ class Session(GuestSession):
         """
 
         url = self._bookmarks_url.format(self.username, 1)
-        soup = self.request(url)
+        soup = utils.request(url)
         div = soup.find("div", {"class": "bookmarks-index dashboard filtered region"})
         h2 = div.h2.text.split()
         return int(h2[4].replace(',', ''))
@@ -515,7 +491,7 @@ class Session(GuestSession):
     def get_statistics(self, year=None):
         year = "All+Years" if year is None else str(year)
         url = f"https://archiveofourown.org/users/{self.username}/stats?year={year}"
-        soup = self.request(url) 
+        soup = utils.request(url) 
         stats = {}
         dt = soup.find("dl", {"class": "statistics meta group"})
         if dt is not None:
@@ -552,14 +528,14 @@ class Session(GuestSession):
         Returns:
             works (list): All marked for later works
         """
-        pageRaw = self.request(f"https://archiveofourown.org/users/{self.username}/readings?page=1&show=to-read").find("ol", {"class": "pagination actions"}).find_all("li")
+        pageRaw = utils.request(f"https://archiveofourown.org/users/{self.username}/readings?page=1&show=to-read").find("ol", {"class": "pagination actions"}).find_all("li")
         maxPage = int(pageRaw[len(pageRaw)-2].text)
         works = []
         for page in range(maxPage):
             grabbed = False
             while grabbed == False:
                 try:
-                    workPage = self.request(f"https://archiveofourown.org/users/{self.username}/readings?page={page+1}&show=to-read")
+                    workPage = utils.request(f"https://archiveofourown.org/users/{self.username}/readings?page={page+1}&show=to-read")
                     worksRaw = workPage.find_all("li", {"role": "article"})
                     for work in worksRaw:
                         try:

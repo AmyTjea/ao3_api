@@ -73,7 +73,7 @@ class Chapter:
                     delattr(self, attr)
         
         if self.work is None:
-            soup = self.request(f"https://archiveofourown.org/chapters/{self.id}?view_adult=true")
+            soup = utils.request(f"https://archiveofourown.org/chapters/{self.id}?view_adult=true")
             workid = soup.find("li", {"class": "chapter entire"})
             if workid is None:
                 raise utils.InvalidIdError("Cannot find work")
@@ -137,7 +137,7 @@ class Chapter:
             raise utils.UnloadedError("Chapter isn't loaded. Have you tried calling Chapter.reload()?")
             
         url = f"https://archiveofourown.org/chapters/{self.id}?page=%d&show_comments=true&view_adult=true"
-        soup = self.request(url%1)
+        soup = utils.request(url%1)
         
         pages = 0
         div = soup.find("div", {"id": "comments_placeholder"})
@@ -152,7 +152,7 @@ class Chapter:
         comments = []
         for page in range(pages):
             if page != 0:
-                soup = self.request(url%(page+1))
+                soup = utils.request(url%(page+1))
             ol = soup.find("ol", {"class": "thread"})
             for li in ol.findAll("li", {"role": "article"}, recursive=False):
                 if maximum is not None and len(comments) >= maximum:
@@ -295,27 +295,3 @@ class Chapter:
 
         return f"https://archiveofourown.org/works/{self._work.id}/chapters/{self.id}"
 
-    def request(self, url):
-        """Request a web page and return a BeautifulSoup object.
-
-        Args:
-            url (str): Url to request
-
-        Returns:
-            bs4.BeautifulSoup: BeautifulSoup object representing the requested page's html
-        """
-
-        req = self.get(url)
-        soup = BeautifulSoup(req.content, "lxml")
-        return soup
-    
-    def get(self, *args, **kwargs):
-        """Request a web page and return a Response object"""  
-        
-        if self._session is None:
-            req = requester.request("get", *args, **kwargs)
-        else:
-            req = requester.request("get", *args, **kwargs, session=self._session.session)
-        if req.status_code == 429:
-            raise utils.HTTPError("We are being rate-limited. Try again in a while or reduce the number of requests")
-        return req

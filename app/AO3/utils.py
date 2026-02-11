@@ -12,7 +12,39 @@ _LANGUAGES = None
 
 AO3_AUTH_ERROR_URL = "https://archiveofourown.org/auth_error"
 
+#### Handling getting soups (TODO: verify works with sessions)
 
+def request(url, session=None):
+    """Request a web page and return a BeautifulSoup object.
+    
+    Args:
+        url (str): Url to request
+        session: Optional session object
+        
+    Returns:
+        bs4.BeautifulSoup: BeautifulSoup object representing the requested page's html
+    """
+    req = get(url, session=session)
+    soup = BeautifulSoup(req.content, "lxml")
+    return soup
+
+def get(url, session=None, *args, **kwargs):
+    """Request a web page and return a Response object"""
+    if session is None:
+        req = requester.request("get", url, *args, **kwargs)
+    else:
+        req = requester.request("get", url, *args, **kwargs, session=session)
+    
+    if req.status_code == 429:
+        raise HTTPError("We are being rate-limited. Try again in a while or reduce the number of requests")
+    
+    return req
+
+
+# TODO: Create function for handling different req status codes (429,404, others)
+
+
+#### Defining exceptions
 class LoginError(Exception):
     def __init__(self, message, errors=[]):
         super().__init__(message)
