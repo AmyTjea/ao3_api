@@ -44,6 +44,23 @@ def get(url, session=None, *args, **kwargs):
 # TODO: Create function for handling different req status codes (429,404, others)
 
 
+
+def get_number_pages(soup):
+    """
+    Within a soup, determine how many subpages there are (e.g under a user's bms and works)
+    
+    :param soup: Description
+    """
+    pages = soup.find("ol", {"title": "pagination"})
+    if pages is None:
+        return 1
+    n = 1
+    for li in pages.findAll("li"):
+        text = li.getText()
+        if text.isdigit():
+            n = int(text)
+    return n
+
 #### Defining exceptions
 class LoginError(Exception):
     def __init__(self, message, errors=[]):

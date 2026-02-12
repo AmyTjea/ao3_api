@@ -256,15 +256,7 @@ class User:
 
     @cached_property
     def _works_pages(self):
-        pages = self._soup_works.find("ol", {"title": "pagination"})
-        if pages is None:
-            return 1
-        n = 1
-        for li in pages.findAll("li"):
-            text = li.getText()
-            if text.isdigit():
-                n = int(text)
-        return n
+        return utils.get_number_pages(self._soup_works)
     
     def get_works(self, use_threading=False):
         """
@@ -323,15 +315,7 @@ class User:
 
     @cached_property
     def _bookmarks_pages(self):
-        pages = self._soup_bookmarks.find("ol", {"title": "pagination"})
-        if pages is None:
-            return 1
-        n = 1
-        for li in pages.findAll("li"):
-            text = li.getText()
-            if text.isdigit():
-                n = int(text)
-        return n
+        return utils.get_number_pages(self._soup_bookmarks)
 
     def get_bookmarks(self, use_threading=False):
         """
