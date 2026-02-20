@@ -16,7 +16,12 @@ class Requester:
             rqm (int, optional): Maximum requests per time window (-1 -> no limit). Defaults to -1.
             timew (int, optional): Time window (seconds). Defaults to 60.
         """
-        self.scraper = cloudscraper.create_scraper()
+        self.scraper = cloudscraper.create_scraper(    browser={
+        "browser": "chrome",
+        "platform": "windows",
+        "mobile": False
+    })
+        self.scraper.headers.update({"Connection": "close"})
 
         
         self._requests = []
