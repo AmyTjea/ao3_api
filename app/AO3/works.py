@@ -102,8 +102,8 @@ class Work:
         if chapters_div is None:
             return
 
-        if self.nchapters > 1:
-            for n in range(1, self.nchapters + 1):
+        if self.n_chapters > 1:
+            for n in range(1, self.n_chapters + 1):
                 chapter = chapters_div.find("div", {"id": f"chapter-{n}"})
                 if chapter is None:
                     continue
@@ -140,12 +140,18 @@ class Work:
                 "Work isn't loaded. Have you tried calling Work.reload()?"
             )
 
-        chapters = {}
+        res = []
         for chapter in self.chapters:
-            images = chapter.get_images()
-            if len(images) != 0:
-                chapters[chapter.number] = images
-        return chapters
+            chap_img = chapter.get_images()
+
+            if chap_img:
+                res.append({
+                    "chapter_number": chapter.number,
+                    "images": list(chap_img), 
+                })
+    
+        self.images = res
+        return res
 
     def download(self, filetype="PDF"):
         """Downloads this work
@@ -210,16 +216,16 @@ class Work:
             "url",
             "fandoms",
             "rating",
-            "bookmarks",
+            "n_bookmarks",
             "categories",
-            "nchapters",
+            "n_chapters",
             "complete",
             "status",
             "summary",
             "characters",
-            "comments",
+            "n_comments",
             "expected_chapters",
-            "hits",
+            "n_hits",
             "kudos",
             "language",
             "relationships",
@@ -332,6 +338,8 @@ class Work:
                 setattr(comment, "text", text)
                 comment._thread = None
                 comments.append(comment)
+
+        self.comments=  comments
         return comments
 
     @threadable.threadable
@@ -578,7 +586,7 @@ class Work:
     @property
     def oneshot(self):
         """Returns True if this work has only one chapter"""
-        return self.nchapters == 1
+        return self.n_chapters == 1
 
     @cached_property
     def series(self):
@@ -622,7 +630,7 @@ class Work:
         return author_list
 
     @cached_property
-    def nchapters(self):
+    def n_chapters(self):
         """Returns the number of chapters of this work
 
         Returns:
@@ -659,12 +667,12 @@ class Work:
 
         return (
             "Completed"
-            if self.nchapters == self.expected_chapters
+            if self.n_chapters == self.expected_chapters
             else "Work in Progress"
         )
 
     @cached_property
-    def hits(self):
+    def n_hits(self):
         """Returns the number of hits this work has
 
         Returns:
@@ -677,7 +685,7 @@ class Work:
         return 0
 
     @cached_property
-    def kudos(self):
+    def n_kudos(self):
         """Returns the number of kudos this work has
 
         Returns:
@@ -689,6 +697,7 @@ class Work:
             return int(self.str_format(kudos.string))
         return 0
 
+    # TODO: ADD METHOD TO GET KUDOSERS
     # @cached_property
     # def kudos(self):
     #     """Returns kudosers of this work 
@@ -704,7 +713,7 @@ class Work:
     #     return 0
 
     @cached_property
-    def comments(self):
+    def n_comments(self):
         """Returns the number of comments this work has
 
         Returns:
@@ -753,7 +762,7 @@ class Work:
             return "Unknown"
 
     @cached_property
-    def bookmarks(self):
+    def n_bookmarks(self):
         """Returns the number of bookmarks this work has
 
         Returns:
@@ -774,7 +783,7 @@ class Work:
         """
         from .users import User
 
-        if self.bookmarks == 0:
+        if self.n_bookmarks == 0:
             return []
         soup_bookmarkers = utils.request(f"https://archiveofourown.org/works/{self.id}/bookmarks")
 
