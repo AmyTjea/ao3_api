@@ -1,5 +1,5 @@
 from functools import cached_property
-
+import re
 from bs4 import BeautifulSoup
 
 from . import threadable, utils
@@ -18,19 +18,59 @@ class User:
         Args:
             username (str): AO3 username
             session (AO3.Session, optional): Used to access additional info
-            load (bool, optional): If true, the user is loaded on initialization. Defaults to True.
+            load (bool, optional): If true, the user is loaded on initialization. Defaults to True. only load if want to access
         """
 
         self.username = username
         self._session = session
+        self._soup_profile = utils.request(
+                f"https://archiveofourown.org/users/{username}/profile"
+            )
+
         self._soup_works = None
-        self._soup_profile = None
         self._soup_bookmarks = None
         self._works = None
         self._bookmarks = None
+
+        self._get_base_data()
+
+
+        # loads in the works, profile and 
         if load:
             self.reload()
             
+    def _get_base_data(self):
+        # get profile data from profile page
+        meta = self._soup_profile.find("dl", class_="meta")
+
+        user_id_dt = meta.find("dt", string="My user ID is:")
+        self.user_id = user_id_dt.find_next_sibling("dd").get_text(strip=True)
+        
+        joined_dt = meta.find("dt", string="I joined on:")
+        self.joined_date = joined_dt.find_next_sibling("dd").get_text(strip=True)
+
+        self.pseuds = []
+
+        pseud_list = meta.find("dd", class_="pseuds")
+        for name in pseud_list.find_all("a"):
+            self.pseuds+= name
+
+        #get stats on user (num works, bms, etc)
+        nav_region = self._soup_profile.find(id="dashboard")
+        metadata = ["works","series","bookmarks","collections","gifts"]
+        for data in metadata:
+            pattern = rf"/users/.+/{data}"
+            nav_item = nav_region.find("a", href=re.compile(pattern))
+            
+            if nav_item:
+                nav_item_text = nav_item.text.strip()
+                count = re.search(r"\((\d+)\)", nav_item_text).group(1)
+                setattr(self, f"n{data}", count)
+                
+            else:
+                raise ValueError #probs not on the right page/ page failed to load
+
+
     def __repr__(self):
         return f"<User [{self.username}]>"
     
@@ -62,7 +102,9 @@ class User:
         """
         
         self._session = session 
-        
+
+
+    # TODO: HANDLE WHEN UNABLE TO GET SOUP (VERIFY)
     @threadable.threadable
     def reload(self):
         """
@@ -122,8 +164,6 @@ class User:
             None
         )
 
-        self._works = None
-        self._bookmarks = None
         
     def get_avatar(self):
         """Returns the source url of the avatar
@@ -131,7 +171,7 @@ class User:
         Returns:
             src: str
         """
-        
+        # TODO: ADD CHECKS FOR IF REQUIRED SOUP HAS LOADED PROPERLY?
         icon = self._soup_profile.find("p", {"class": "icon"})
         src = icon.img.attrs["src"]
         if src == "images/skins/iconsets/default/icon_user.png":
@@ -168,31 +208,7 @@ class User:
         
         utils.subscribe(self, "User", self._session, True, self._sub_id)
         
-    @property
-    def id(self):
-        meta = self._soup_profile.find("dl", class_="meta")
-        user_id_dt = meta.find("dt", string="My user ID is:")
-        user_id = user_id_dt.find_next_sibling("dd").get_text(strip=True)
 
-        return user_id
-    
-    @property
-    def join_date(self):
-        meta = self ._soup_profile.find("dl", class_="meta")
-        joined_dt = meta.find("dt", string="I joined on:")
-        joined_date = joined_dt.find_next_sibling("dd").get_text(strip=True)
-        return joined_date
-    
-    @property
-    def pseuds(self):
-        # has name for the pseudos only
-        pseuds = []
-        meta = self._soup_profile.find("dl", class_="meta")
-        pseud = meta.find("dd", class_="pseuds")
-        for name in pseud.find_all("a"):
-            pseuds+= name
-
-        return pseuds
         
     @cached_property
     def is_subscribed(self):
@@ -206,7 +222,7 @@ class User:
         return input_ is not None
     
     @property
-    def loaded(self):
+    def loaded(self): # TODO: FIX THIS TO ACTUALLY VERIFY ALL MODULES LOADED IN AND WITH CORRECT CONTENT
         """Returns True if this user has been loaded"""
         return self._soup_profile is not None
     
@@ -242,17 +258,7 @@ class User:
         id_ = header.form.attrs["action"].split("/")[-1]
         return int(id_)
 
-    @cached_property
-    def works(self):
-        """Returns the number of works authored by this user
 
-        Returns:
-            int: Number of works
-        """
-
-        div = self._soup_works.find("div", {"class": "works-index dashboard filtered region"})
-        h2 = div.h2.text.split()
-        return int(h2[4].replace(',', '')) 
 
     @cached_property
     def _works_pages(self):
@@ -301,17 +307,6 @@ class User:
                 continue
             self._works.append(get_work_from_banner(work))
 
-    @cached_property
-    def bookmarks(self):
-        """Returns the number of works user has bookmarked
-
-        Returns:
-            int: Number of bookmarks 
-        """
-
-        div = self._soup_bookmarks.find("div", {"class": "bookmarks-index dashboard filtered region"})
-        h2 = div.h2.text.split()
-        return int(h2[0])  
 
     @cached_property
     def _bookmarks_pages(self):
@@ -400,12 +395,3 @@ class User:
 
         return string.replace(",", "")
 
-    @property
-    def work_pages(self):
-        """
-        Returns how many pages of works a user has
-
-        Returns:
-            int: Amount of pages
-        """
-        return self._works_pages

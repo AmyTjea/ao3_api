@@ -17,19 +17,25 @@ def load_user(username: str) -> User:
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+        metadata = ["works","series","bookmarks","collections","gifts"]
 
 @router.get("/{username}")
 def get_user_metadata(username: str):
     # get username, url, avatar, bio,pseuds,join date,userid,bio
-    user = load_user(username)
+    user = User(username)
     return {
         "username": user.username,
         "url": user.url,
         "avatar": user.get_avatar(),
         "bio": user.bio,
+        "join_date": user.join_date,
         "id": user.id,
         "pseuds": user.pseuds,
-        "join_date": user.join_date,
+        "n_works":user.nworks,
+        "n_bookmarks":user.nbookmarks,
+        "n_series":user.nseries,
+        "n_collections":user.ncollections,
+        "n_gifts":user.ngifts
     }
 
 
@@ -39,7 +45,7 @@ def get_user_works(username: str):
     works = user.get_works()
     works_details = [work.metadata for work in works]
     return {"username": user.username, 
-            "nworks": user.works, 
+            "nworks": user.nworks, 
             "works": works_details}
 
 
