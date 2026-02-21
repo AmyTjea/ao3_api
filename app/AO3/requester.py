@@ -1,7 +1,6 @@
 import threading
 import time
-
-import cloudscraper
+from curl_cffi import requests
 
 
 
@@ -16,13 +15,7 @@ class Requester:
             rqm (int, optional): Maximum requests per time window (-1 -> no limit). Defaults to -1.
             timew (int, optional): Time window (seconds). Defaults to 60.
         """
-        self.scraper = cloudscraper.create_scraper(    browser={
-        "browser": "chrome",
-        "platform": "windows",
-        "mobile": False
-    })
-        self.scraper.headers.update({"Connection": "close"})
-
+        self.scraper = requests
         
         self._requests = []
         self._rqtw = rqtw
@@ -73,7 +66,7 @@ class Requester:
             del kwargs["session"]
             req = sess.request(*args, **kwargs)
         else:
-            req = self.scraper.request(*args, **kwargs)
+            req = self.scraper.request(*args, **kwargs,impersonate="chrome")
             
         return req
 

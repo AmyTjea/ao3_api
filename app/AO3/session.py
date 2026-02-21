@@ -3,7 +3,7 @@ import re
 import time
 from functools import cached_property
 
-import requests
+from curl_cffi import requests
 from bs4 import BeautifulSoup
 
 from . import threadable, utils

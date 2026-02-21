@@ -4,7 +4,6 @@ from bs4 import BeautifulSoup
 
 from . import threadable, utils
 from .common import get_work_from_banner, get_work_or_series_from_banner
-from .requester import requester
 
 
 class User:
@@ -44,10 +43,10 @@ class User:
         meta = self._soup_profile.find("dl", class_="meta")
 
         user_id_dt = meta.find("dt", string="My user ID is:")
-        self.user_id = user_id_dt.find_next_sibling("dd").get_text(strip=True)
+        self.id = user_id_dt.find_next_sibling("dd").get_text(strip=True)
         
         joined_dt = meta.find("dt", string="I joined on:")
-        self.joined_date = joined_dt.find_next_sibling("dd").get_text(strip=True)
+        self.join_date = joined_dt.find_next_sibling("dd").get_text(strip=True)
 
         self.pseuds = []
 
