@@ -4,7 +4,7 @@ from bs4 import BeautifulSoup
 
 from . import threadable, utils
 from .common import get_work_from_banner, get_work_or_series_from_banner
-
+from datetime import datetime
 
 class User:
     """
@@ -46,9 +46,13 @@ class User:
         self.id = user_id_dt.find_next_sibling("dd").get_text(strip=True)
         
         joined_dt = meta.find("dt", string="I joined on:")
-        self.join_date = joined_dt.find_next_sibling("dd").get_text(strip=True)
+        string_date =joined_dt.find_next_sibling("dd").get_text(strip=True)
+        self.join_date = datetime.strptime(string_date,"%Y-%m-%d")
+
 
         self.pseuds = []
+
+        self.avatar = self.get_avatar()
 
         pseud_list = meta.find("dd", class_="pseuds")
         for name in pseud_list.find_all("a"):
@@ -64,7 +68,7 @@ class User:
             if nav_item:
                 nav_item_text = nav_item.text.strip()
                 count = re.search(r"\((\d+)\)", nav_item_text).group(1)
-                setattr(self, f"n{data}", count)
+                setattr(self, f"n_{data}", count)
                 
             else:
                 raise ValueError #probs not on the right page/ page failed to load

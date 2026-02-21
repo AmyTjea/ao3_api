@@ -1,10 +1,37 @@
+from typing import Union
 from fastapi import APIRouter, HTTPException, Query
-from fastapi.responses import StreamingResponse
+from pydantic import BaseModel
+from datetime import date
 
 from app.AO3.users import User
 from app.AO3 import utils
 
 router = APIRouter()
+
+class UserMetadata(BaseModel):
+    username: str
+    url: str
+    avatar: str
+    bio: str
+    join_date: date
+    id: int
+    pseuds: list[str]
+    n_works: int
+    n_bookmarks: int
+    n_series: int
+    n_collections: int
+    n_gifts: int
+
+    model_config = {"from_attributes": True}
+
+# TODO: Define Series api endpoint and put in series metadata
+#TODO: MANAGE BASE MODELS
+# class Bookmark(BaseModel):
+
+#     id:int
+#     bookmarker: Union[str, UserMetadata]
+#     bookmark: Union[WorkMetadata]#,SeriesMetadata]
+
 
 
 def load_user(username: str) -> User:
@@ -17,35 +44,21 @@ def load_user(username: str) -> User:
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-        metadata = ["works","series","bookmarks","collections","gifts"]
 
-@router.get("/{username}")
+@router.get("/{username}",response_model=UserMetadata)
 def get_user_metadata(username: str):
     # get username, url, avatar, bio,pseuds,join date,userid,bio
     user = User(username)
-    return {
-        "username": user.username,
-        "url": user.url,
-        "avatar": user.get_avatar(),
-        "bio": user.bio,
-        "join_date": user.join_date,
-        "id": user.id,
-        "pseuds": user.pseuds,
-        "n_works":user.nworks,
-        "n_bookmarks":user.nbookmarks,
-        "n_series":user.nseries,
-        "n_collections":user.ncollections,
-        "n_gifts":user.ngifts
-    }
+    return UserMetadata.from_orm(user)
 
 
 @router.get("/{username}/works")
-def get_user_works(username: str):
+def get_user_works(username: str,include:str|None = Query(default=None),):
     user = load_user(username)
     works = user.get_works()
     works_details = [work.metadata for work in works]
     return {"username": user.username, 
-            "nworks": user.nworks, 
+            "n_works": user.nworks, 
             "works": works_details}
 
 
