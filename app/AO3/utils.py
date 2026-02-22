@@ -38,6 +38,12 @@ def get(url, session=None, *args, **kwargs):
     if req.status_code == 429:
         raise HTTPError("We are being rate-limited. Try again in a while or reduce the number of requests")
     
+    if req.status_code != 200:
+        for key in req.__dict__.keys():
+            print(key,req.__dict__[key])
+
+        raise HTTPError("Got status code "+str(req.status_code)+" from url " +url)
+    
     return req
 
 
@@ -264,6 +270,28 @@ def workid_from_url(url):
         workid = split_url[index+1].split("?")[0]
         if workid.isdigit():
             return int(workid)
+    return
+
+
+
+        
+def username_from_url(url):
+    """Get the username from an archiveofourown.org website url
+
+    Args:
+        url (str): User profile URL 
+
+    Returns:
+        str: username
+    """
+    split_url = url.split("/")
+    try:
+        index = split_url.index("users")
+    except ValueError:
+        return
+    if len(split_url) >= index+1:
+        username = split_url[index+1].split("?")[0]
+        return username
     return
 
 def comment(commentable, comment_text, session, fullwork=False, commentid=None, email="", name="", pseud=None):

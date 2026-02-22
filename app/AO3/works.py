@@ -820,8 +820,9 @@ class Work:
 
         for user_bookmark in ol.select("li.user.short.blurb.group"):
             h5 = user_bookmark.find("h5")
-            #grab the username 
-            bookmarker_usernames.append(h5.find("a").getText())
+            url = h5.find("a")["href"]
+            bookmarker_usernames.append(utils.username_from_url(url))
+
 
         return bookmarker_usernames
 
