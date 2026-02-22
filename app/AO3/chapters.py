@@ -179,7 +179,7 @@ class Chapter:
         return comments
         
     def get_images(self):
-        """Gets all images from this work
+        """Gets all images from this chapter
 
         Raises:
             utils.UnloadedError: Raises this error if the chapter isn't loaded
@@ -195,7 +195,7 @@ class Chapter:
             line += 1
             for img in p.findAll("img"):
                 if "src" in img.attrs:
-                    images.append((img.attrs["src"], line))
+                    images.append({"paragraph_num":line,"src":img.attrs["src"]})
         return tuple(images)
         
     @property

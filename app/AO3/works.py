@@ -232,7 +232,7 @@ class Work:
             "restricted",
             "tags",
             "warnings",
-            "words",
+            "word_count",
             "collections",
         )
         string_fields = (
@@ -735,7 +735,7 @@ class Work:
         return self._soup.find("img", {"title": "Restricted"}) is not None
 
     @cached_property
-    def words(self):
+    def word_count(self):
         """Returns the this work's word count
 
         Returns:

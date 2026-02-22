@@ -1,117 +1,12 @@
-from typing import Literal, Optional, Union
-from app.api.users import UserMetadata
+from typing import Literal
 from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import StreamingResponse
-from pydantic import BaseModel, HttpUrl
 
 from app.AO3.works import Work
 from app.AO3 import utils
+from app.api.schemas.works import *
 
 router = APIRouter()
-
-ExpandField = Literal[
-    "authors",
-    "series",
-    "collections",
-]
-
-
-# TODO: add in collections + series involved in into metadata
-class WorkMetadata(BaseModel):
-    id: int
-    title: str
-    url: str
-    authors: list[Union[str, UserMetadata]]
-    fandoms: list[str]
-    rating: str
-    n_chapters: int
-    complete: bool
-    n_hits: int
-    n_kudos: int
-    n_bookmarks: int
-    word_count: int
-
-    model_config = {"from_attributes": True}
-
-
-class WorkText(BaseModel):
-    id: int
-    title: str
-    text: str
-
-    model_config = {"from_attributes": True}
-
-
-class Chapter(BaseModel):
-    id: int
-    number: int
-    words: int
-    summary: str
-    start_notes: str
-    end_notes: str
-    url: str
-    title: str
-    text: str
-
-    model_config = {"from_attributes": True}
-
-
-class WorkChapter(BaseModel):
-    id: int
-    title: str
-    text: str
-    chapters: list[Chapter]
-
-    model_config = {"from_attributes": True}
-
-
-# TODO: allow for expanding author + add link to chapters
-class Comment(BaseModel):
-    id: int
-    author: Union[str, UserMetadata]
-    parent_comment: Optional["Comment"] = None
-    text: str
-
-    model_config = {"from_attributes": True}
-
-
-Comment.model_rebuild()
-
-
-class WorkComments(BaseModel):
-    id: int
-    n_comments: int
-    comments: list[Comment]
-
-    model_config = {"from_attributes": True}
-
-
-class Image(BaseModel):
-    paragraph_num: int
-    src: HttpUrl
-
-    model_config = {"from_attributes": True}
-
-
-class ChapterImage(BaseModel):
-    chapter_number: int  # mb have chapter model? probs not tho
-    images: list[Image]
-    model_config = {"from_attributes": True}
-
-
-class WorkImages(BaseModel):
-    id: int
-    images: list[ChapterImage]
-
-    model_config = {"from_attributes": True}
-
-
-# have list of
-class WorkBookmarks(BaseModel):
-    id: int
-    bookmarkers: list[Union[UserMetadata, str]]
-
-    model_config = {"from_attributes": True}
 
 
 def load_work(work_id: int, load_chapters: bool = True) -> Work:
@@ -128,14 +23,20 @@ def load_work(work_id: int, load_chapters: bool = True) -> Work:
 @router.get("/{work_id}", response_model=WorkMetadata)
 def get_work_metadata(
     work_id: int,
-    expand: list[ExpandField] = Query(default=[]),
+    expand: list[
+        Literal[
+            "authors",
+            "series",
+            "collections",
+        ]
+    ] = Query(default=[]),
 ):
     work = load_work(work_id, load_chapters=False)
 
     res = WorkMetadata.model_validate(work)
 
     if "authors" not in expand:
-        res.authors = [a.username for a in work.authors]
+        res = res.model_copy(update={"authors": [a.username for a in work.authors]})
 
     return res
 
@@ -214,10 +115,8 @@ def get_work_bookmarks(
 
     bookmarkers = work.get_bookmarkers()
 
-    
-    
     if "authors" not in expand:
-        bookmarkers= [a.username for a in bookmarkers]
+        bookmarkers = [a.username for a in bookmarkers]
 
     return WorkBookmarks(
         id=work_id,
