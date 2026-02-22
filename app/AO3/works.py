@@ -4,6 +4,8 @@ from functools import cached_property
 
 from bs4 import BeautifulSoup
 
+from .bookmarks import Bookmarker
+
 from . import threadable, utils
 from .chapters import Chapter
 from .comments import Comment
@@ -781,38 +783,23 @@ class Work:
         Returns:
             int: number of bookmarks
         """
-        from .users import User
 
         if self.n_bookmarks == 0:
             return []
         soup_bookmarkers = utils.request(f"https://archiveofourown.org/works/{self.id}/bookmarks")
 
-        ## find how many pages of bookmarkers
-        pages = soup_bookmarkers.find("ol", {"class": "pagination"})
-        n = 1
-        # TODO: Adjust so instead of getting numbers via iteration, select the last li without the class next
-        if pages is not None:
-            for li in pages.findAll("li"):
-                text = li.getText()
-                if text.isdigit():
-                    n = int(text)
+        n = utils.get_number_pages(soup_bookmarkers)
 
-        # alternative, n= pages[-2]
-
-        bookmarkers_usernames = []
-        for page in range(n):
-            bookmarkers_usernames += self._get_bookmarkers(page+1)
 
         bookmarkers = []
-        if bookmarkers_usernames is not None:
-            for username in bookmarkers_usernames:
-                user = User(username, load=False)
-                bookmarkers.append(user)
+        for page in range(n):
+            bookmarkers += self._get_bookmarkers(page+1)
+
 
         return bookmarkers
     
     def _get_bookmarkers(self,page=1):
-        bookmarker_usernames = []
+        bookmarker = []
 
         soup_bookmarks_page = utils.request(f"https://archiveofourown.org/works/{self.id}/bookmarks?page={page}")
         
@@ -821,10 +808,10 @@ class Work:
         for user_bookmark in ol.select("li.user.short.blurb.group"):
             h5 = user_bookmark.find("h5")
             url = h5.find("a")["href"]
-            bookmarker_usernames.append(utils.username_from_url(url))
+            bookmarker.append(Bookmarker(user_bookmark))
 
 
-        return bookmarker_usernames
+        return bookmarker
 
     def get_kudosers(self):
         """Returns the bookmarkers of this work 

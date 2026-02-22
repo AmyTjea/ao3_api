@@ -57,6 +57,7 @@ def get_number_pages(soup):
     
     :param soup: Description
     """
+    #TODO: GET PAGES BETTER WITHOUT ITER (GET 2ND LAST?)
     pages = soup.find("ol", {"title": "pagination"})
     if pages is None:
         return 1

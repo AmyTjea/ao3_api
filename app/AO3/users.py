@@ -2,6 +2,8 @@ from functools import cached_property
 import re
 from bs4 import BeautifulSoup
 
+from .bookmarks import UserBookmark
+
 from . import threadable, utils
 from .common import get_work_from_banner, get_work_or_series_from_banner
 from datetime import datetime
@@ -19,6 +21,7 @@ class User:
             session (AO3.Session, optional): Used to access additional info
             load (bool, optional): If true, the user is loaded on initialization. Defaults to True. only load if want to access
         """
+        #TODO: HANDLE ORPHAN ACCS
 
         self.username = username
         self._session = session
@@ -39,6 +42,7 @@ class User:
             self.reload()
             
     def _get_base_data(self):
+        
         # get profile data from profile page
         meta = self._soup_profile.find("dl", class_="meta")
 
@@ -354,10 +358,12 @@ class User:
         ol = self._soup_bookmarks.find("ol", {"class": "bookmark index group"})
 
         for work in ol.find_all("li", {"role": "article"}):
-            authors = []
+
+            # handles deleted works
             if work.h4 is None or work.h4.a is None:
                 continue
-            self._bookmarks.append(get_work_or_series_from_banner(work))
+
+            self._bookmarks.append(UserBookmark(work))
     
     @cached_property
     def bio(self):
