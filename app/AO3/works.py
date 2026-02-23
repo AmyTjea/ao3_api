@@ -43,7 +43,31 @@ class Work:
             return f"<Work [{self.title}]>"
         except:
             return f"<Work [{self.id}]>"
+        
+    def __str__(self):
+        if not self.loaded:
+            return f"Work {self.id} (not loaded)"
 
+        try:
+            authors = ", ".join(a.username for a in self.authors) or "Unknown"
+        except Exception:
+            authors = "Unknown"
+
+        try:
+            status = "Complete" if self.complete else "WIP"
+        except Exception:
+            status = "Unknown"
+
+        return (
+            f"{self.title}\n"
+            f"ID: {self.id}\n"
+            f"Authors: {authors}\n"
+            f"Chapters: {self.n_chapters}\n"
+            f"Words: {self.word_count}\n"
+            f"Status: {status}\n"
+            f"URL: {self.url}"
+        )
+    
     def __eq__(self, other):
         return isinstance(other, __class__) and other.id == self.id
 
@@ -619,14 +643,17 @@ class Work:
 
         from .users import User
 
-        authors = self._soup.find_all("h3", {"class": "byline heading"})
+        authors = self._soup.find("h3", {"class": "byline heading"})
+        authors = authors.find_all("a")
         if len(authors) == 0:
             return []
-        formatted_authors = authors[0].text.replace("\n", "").split(", ")
         author_list = []
         if authors is not None:
-            for author in formatted_authors:
-                user = User(author, load=False)
+            author_urls = [a["href"]for a in authors]
+
+            for author in author_urls:
+                username = utils.username_from_url(author)
+                user = User(username, load=False)
                 author_list.append(user)
 
         return author_list
@@ -806,8 +833,6 @@ class Work:
         ol = soup_bookmarks_page.find("ol", {"class": "bookmark index group"})
 
         for user_bookmark in ol.select("li.user.short.blurb.group"):
-            h5 = user_bookmark.find("h5")
-            url = h5.find("a")["href"]
             bookmarker.append(Bookmarker(user_bookmark))
 
 
